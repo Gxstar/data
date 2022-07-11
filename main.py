@@ -1,5 +1,6 @@
 import os
 import time
+import ast
 import urllib.parse
 
 import requests
@@ -14,21 +15,24 @@ o_url = 'https://cn.bing.com/images/search?q='
 
 # 获得网页内容
 def get_link(keywords: str, page_num: int):
-    if not os.path.exists(keywords):
+    name=urllib.parse.quote(keywords)
+    if not os.path.exists(f'./image/{keywords}'):
         os.mkdir(f'./image/{keywords}')
     for i in range(page_num):
-        url = f'https://cn.bing.com/images/search?q={keywords}&first={i*35+1}&count=35'
+        url = f'https://cn.bing.com/images/search?q={name}&first={i*35+1}&count=35'
         content = requests.get(url,headers=header).content.decode('utf-8')
         soup=BeautifulSoup(content,'lxml')
-        for j in soup.select('.mimg'):
-            link=j.attrs['src']
+        length = len(soup.select('.iusc'))
+        for item,j in enumerate(soup.select('.iusc')):
+            print(f'当前请求第{i+1}页，第{item+1}项，本页共{length}项，共{page_num}页',end='\r')
+            link=ast.literal_eval(j.attrs['m'])['murl']
             count=len(os.listdir(f'./image/{keywords}'))+1
             save_img(link,keywords,count)
 
 # 保存图片
 def save_img(url: str, keywords: str, num: int):
     try:
-        time.sleep(0.25)
+        time.sleep(1)
         r = requests.get(url, stream=True, headers=header)
         if r.status_code == 200:
             open(f'./image/{keywords}/img_{keywords}_{num}.png', 'wb').write(r.content)
@@ -39,9 +43,8 @@ def save_img(url: str, keywords: str, num: int):
 
 
 def main():
-    keywords = '林允儿'
+    keywords = '彭十六'
     page_num = 20
-    # keywords = urllib.parse.quote(keywords)
     get_link(keywords, page_num)
 
 
